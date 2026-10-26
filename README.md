@@ -1,8 +1,10 @@
 # IdeaBank — Neeman's ad film scripts
 
-A 5-step ad script generator that runs on this PC and calls Claude through the Anthropic API.
-It writes inside Neeman's brand — positioning, tone of voice and the film guidelines from the
-brand manual are built into the prompt, so the output comes back on brand rather than generic.
+A 6-step ad script generator that runs on your own machine and calls Claude through the
+Anthropic API. It briefs the model with a brand profile — positioning, tone of voice, film
+guidelines — before every request, so the scripts come back on brand rather than generic.
+
+The profile itself is kept out of this repository; see **The brand profile** below.
 
 ## Run it
 
