@@ -1,0 +1,30 @@
+# ---------------------------------------------------------------------------
+# Confidential brand material. brand.example.js is the committed placeholder;
+# the real profile lives only on machines allowed to have it.
+# ---------------------------------------------------------------------------
+public/brand.local.js
+
+# ---------------------------------------------------------------------------
+# Secrets. The API key and saved sessions normally live in %USERPROFILE%\.ideabank\,
+# well outside this folder - these rules are belt and braces in case anything
+# is ever copied in here.
+# ---------------------------------------------------------------------------
+.ideabank/
+sessions/
+config.json
+.env
+.env.*
+*.key
+*.pem
+
+# ---------------------------------------------------------------------------
+# Backups, scratch and editor noise
+# ---------------------------------------------------------------------------
+*.bak
+*.log
+node_modules/
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

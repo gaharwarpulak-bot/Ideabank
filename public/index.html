@@ -1,0 +1,1170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IdeaBank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f0f2f8;
+    --card: #ffffff;
+    --ink: #111111;
+    --muted: #888888;
+    --line: #e8e8e8;
+    --soft: #f8f8f8;
+    --yellow: #f5c200;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--ink);
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  input, textarea, select { font-family: inherit; }
+
+  /* ---------- shell ---------- */
+  .shell { display: grid; grid-template-columns: 232px 400px 1fr; gap: 16px; height: 100vh; padding: 16px; }
+  @media (max-width: 1240px) { .shell { grid-template-columns: 400px 1fr; } .sidebar { display: none; } }
+  @media (max-width: 1000px) { .shell { grid-template-columns: 1fr; height: auto; } }
+
+  /* ---------- sessions sidebar ---------- */
+  .sidebar { background: var(--card); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .sb-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 14px 12px; border-bottom: 1px solid var(--line); }
+  .sb-title { font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 1px; }
+  .sb-new { background: var(--ink); color: #fff; border: none; border-radius: 7px; padding: 5px 11px; font-size: 12px; }
+  .sb-new:hover { background: #000; }
+  .sb-list { flex: 1; overflow: auto; padding: 8px; }
+  .sb-empty { color: #c0c4d2; font-size: 12px; text-align: center; padding: 26px 14px; line-height: 1.7; }
+  .sess { position: relative; border-radius: 9px; padding: 9px 26px 9px 11px; cursor: pointer; transition: .14s; margin-bottom: 2px; }
+  .sess:hover { background: var(--soft); }
+  .sess.sel { background: var(--ink); }
+  .sess.sel .sess-name, .sess.sel .sess-sub { color: #fff; }
+  .sess.sel .sess-sub { opacity: .62; }
+  .sess-name { font-size: 12.5px; color: #333; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sess-sub { font-size: 10.5px; color: #aaa; margin-top: 2px; }
+  .sess-x { position: absolute; top: 7px; right: 6px; width: 17px; height: 17px; border: none; border-radius: 50%; background: transparent;
+            color: #bbb; font-size: 13px; line-height: 1; padding: 0; opacity: 0; transition: .14s; }
+  .sess:hover .sess-x { opacity: 1; }
+  .sess-x:hover { background: #ffe8e8; color: #c33; }
+  .sess.sel .sess-x { color: #999; }
+  .sess.sel .sess-x:hover { background: #333; color: #fff; }
+
+  /* ---------- story approach ---------- */
+  .slot { margin-bottom: 12px; }
+  .slot:last-child { margin-bottom: 0; }
+  .slot-name { font-size: 11px; letter-spacing: .6px; color: #999; font-weight: 500; margin-bottom: 6px; }
+
+  .left { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow: auto; padding-right: 2px; }
+  .right { display: flex; flex-direction: column; min-height: 0; }
+
+  /* ---------- hero ---------- */
+  .hero { background: var(--ink); border-radius: 16px; padding: 22px 24px; color: #fff; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 2px; line-height: 1; }
+  .tagline { font-size: 13px; color: #8a8a8a; margin-top: 2px; }
+  .hero-foot { display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .badge { background: var(--yellow); color: #000; font-size: 11px; font-weight: 500; padding: 4px 12px; border-radius: 20px; letter-spacing: .4px; }
+  .badge.ghost { background: #222; color: #ccc; cursor: pointer; }
+  .badge.ghost:hover { background: #2e2e2e; }
+  select.model { background: #222; color: #ccc; border: none; border-radius: 20px; font-size: 11px; padding: 4px 10px; }
+
+  /* ---------- progress ---------- */
+  .progress { display: flex; align-items: center; gap: 0; padding: 4px 6px; }
+  .dot { width: 24px; height: 24px; border-radius: 50%; background: #dfe3ef; color: #9aa0b4; font-size: 11px; font-weight: 500;
+         display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: .25s; }
+  .dot.active { background: var(--ink); color: #fff; }
+  .dot.done { background: #c9cedd; color: #fff; }
+  .bar { flex: 1; height: 2px; background: #dfe3ef; }
+  .bar.done { background: #c9cedd; }
+
+  /* ---------- cards ---------- */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  .step-label { font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase; color: #bbb; font-weight: 500; margin-bottom: 8px; }
+  .step-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; margin-bottom: 14px; }
+
+  .field { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; font-size: 20px; font-weight: 400; outline: none; background: #fff; transition: .2s; }
+  .field:focus { border-color: var(--ink); }
+  .field::placeholder { color: #c4c4c4; }
+
+  .opts { display: flex; flex-direction: column; gap: 8px; }
+  .opt { text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; font-size: 14px; color: #333; transition: .18s; }
+  .opt:hover { border-color: #bbb; transform: translateX(2px); }
+  .opt.sel { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .btn { width: 100%; border: none; border-radius: 10px; padding: 14px; font-size: 14px; font-weight: 500; background: var(--ink); color: #fff; transition: .18s; }
+  .btn:hover:not(:disabled) { background: #000; transform: translateY(-1px); }
+  .btn:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+  .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+  .btn.ghost:hover:not(:disabled) { border-color: var(--ink); background: #fff; }
+  .btn.yellow { background: var(--yellow); color: #000; }
+  .btn.sm { padding: 10px; font-size: 13px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* ---------- quick fire ---------- */
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tag { background: var(--soft); border: 1px solid var(--line); border-radius: 20px; padding: 5px 12px; font-size: 12px; color: #555; }
+  .tag.dark { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .chip-label { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: #bbb; font-weight: 500; margin: 14px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 5px 12px; font-size: 12px; color: #666; transition: .15s; }
+  .chip:hover { border-color: #999; }
+  .chip.sel { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* ---------- uploads ---------- */
+  .uploads { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .up { background: var(--soft); border: 1px dashed #d4d4d4; border-radius: 10px; padding: 14px 8px; text-align: center; transition: .18s; overflow: hidden; position: relative; min-height: 86px; }
+  .up:hover { border-color: #999; background: #f2f2f2; }
+  .up-name { font-size: 12px; font-weight: 500; }
+  .up-sub { font-size: 10px; color: #aaa; margin-top: 3px; }
+  .up.has { border-style: solid; border-color: var(--ink); background: #fff; }
+  .up-thumbs { display: flex; gap: 3px; justify-content: center; margin-top: 7px; flex-wrap: wrap; }
+  .up-thumbs img { width: 26px; height: 26px; object-fit: cover; border-radius: 4px; }
+
+  .note { background: #fffde8; border: 1px solid #f0e68c; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #7a6f00; line-height: 1.6; margin-top: 12px; }
+  .err { background: #fff5f5; border: 1px solid #ffd0d0; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #c33; line-height: 1.6; margin-top: 12px; }
+
+  /* ---------- output ---------- */
+  .out { background: var(--card); border: 1px solid var(--line); border-radius: 16px; display: flex; flex-direction: column; min-height: 0; height: 100%; }
+  @media (max-width: 1000px) { .out { height: 70vh; } }
+  .out-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  .out-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; }
+  .out-actions { display: flex; gap: 6px; }
+  .mini { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font-size: 12px; color: #555; }
+  .mini:hover { border-color: var(--ink); color: var(--ink); }
+  .mini:disabled { opacity: .35; cursor: not-allowed; }
+  .out-body { flex: 1; overflow: auto; padding: 24px 28px 60px; }
+
+  .empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #c0c4d2; gap: 8px; }
+  .empty .big { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; }
+  .empty .small { font-size: 13px; max-width: 280px; line-height: 1.7; }
+
+  .md { font-size: 14px; line-height: 1.8; color: #333; max-width: 760px; }
+  .md h1 { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; color: #111; margin: 24px 0 10px; }
+  .md h2 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 1px; color: #111; margin: 26px 0 8px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+  .md h3 { font-size: 14px; font-weight: 700; color: #111; margin: 20px 0 6px; letter-spacing: .2px; }
+  .md p { margin-bottom: 12px; }
+  .md ul, .md ol { margin: 0 0 12px 20px; }
+  .md li { margin-bottom: 5px; }
+  .md strong { font-weight: 500; color: #111; }
+  .md em { font-style: italic; color: #555; }
+  .md code { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; font-family: 'Courier New', monospace; font-size: 12px; }
+  .md hr { border: none; border-top: 1px solid #eee; margin: 22px 0; }
+  .md blockquote { border-left: 2px solid var(--yellow); padding-left: 14px; color: #666; margin-bottom: 12px; }
+
+  .caret { display: inline-block; width: 7px; height: 15px; background: var(--ink); vertical-align: -2px; animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ---------- key gate ---------- */
+  .gate { position: fixed; inset: 0; background: rgba(240,242,248,.93); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+  .gate-card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 28px; width: 100%; max-width: 460px; box-shadow: 0 20px 60px rgba(0,0,0,.08); }
+  .gate-logo { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 2px; line-height: 1; }
+  .gate-sub { font-size: 13px; color: #888; margin: 4px 0 18px; line-height: 1.6; }
+  .gate input { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 13px 15px; font-size: 13px; outline: none; font-family: 'Courier New', monospace; }
+  .gate input:focus { border-color: var(--ink); }
+  .gate-help { font-size: 11px; color: #aaa; line-height: 1.7; margin-top: 12px; }
+  .gate-help a { color: #555; }
+
+  /* ---------- shot tables ---------- */
+  .md table { width: 100%; border-collapse: collapse; margin: 14px 0 18px; font-size: 13px; }
+  .md th { text-align: left; font-weight: 500; color: #111; background: var(--soft); border: 1px solid var(--line); padding: 8px 10px; white-space: nowrap; }
+  .md td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; line-height: 1.6; }
+  .md td:first-child { white-space: nowrap; color: #666; font-variant-numeric: tabular-nums; }
+
+  /* ---------- reference images ---------- */
+  .dropzone { background: var(--soft); border: 1px dashed #d4d4d4; border-radius: 10px; padding: 18px 12px; text-align: center; transition: .18s; cursor: pointer; }
+  .dropzone:hover, .dropzone.over { border-color: var(--ink); background: #f2f2f2; }
+  .dz-main { font-size: 13px; font-weight: 500; }
+  .dz-sub { font-size: 11px; color: #aaa; margin-top: 4px; }
+  .imgs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+  .imgs:empty { display: none; }
+  .thumb { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb button { position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border: none; border-radius: 50%;
+                  background: rgba(0,0,0,.65); color: #fff; font-size: 11px; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; }
+  .thumb button:hover { background: #000; }
+
+  /* ---------- duration ---------- */
+  .durs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dur { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 7px 14px; font-size: 13px; color: #555; transition: .15s; }
+  .dur:hover { border-color: #999; }
+  .dur.sel { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .brief { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px; font-size: 13px; outline: none; resize: vertical; min-height: 60px; font-weight: 300; }
+  .brief:focus { border-color: var(--ink); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ============ API KEY GATE ============ -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="gate-logo">IdeaBank</div>
+    <div class="gate-sub">Paste your Anthropic API key to switch Claude on. It is saved once on this PC and never leaves it except to call Anthropic.</div>
+    <input id="keyInput" type="password" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false" />
+    <div id="keyErr" class="err hidden"></div>
+    <button class="btn" id="keySave" style="margin-top:12px">Save &amp; Verify Key</button>
+    <div class="gate-help">
+      Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">console.anthropic.com</a>.
+      It is stored at <code id="cfgPath">~/.ideabank/config.json</code> on this machine only.
+    </div>
+  </div>
+</div>
+
+<!-- ============ SERVER NOT RUNNING ============ -->
+<div class="gate hidden" id="offline">
+  <div class="gate-card">
+    <div class="gate-logo">IdeaBank</div>
+    <div class="gate-sub">IdeaBank needs its own small server running on this PC &mdash; that is what talks to Claude.</div>
+    <div id="offlineWhy" class="err">The server is not running yet.</div>
+    <button class="btn" id="offlineGo" style="margin-top:12px">Open http://localhost:4321</button>
+    <div class="gate-help">
+      Start it by double-clicking <code>start.bat</code> in the app folder, then press the button above.
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="shell">
+
+  <div class="sidebar">
+    <div class="sb-head">
+      <div class="sb-title">Sessions</div>
+      <button class="sb-new" id="newSession">New</button>
+    </div>
+    <div class="sb-list" id="sbList"></div>
+  </div>
+
+  <div class="left">
+
+    <div class="hero">
+      <div class="logo">IdeaBank</div>
+      <div class="tagline">Ad film scripts for Neeman's &mdash; change the norm.</div>
+      <div class="hero-foot">
+        <span class="badge" id="keyBadge">Connecting...</span>
+        <select class="model" id="modelSel">
+          <option value="claude-opus-5">Opus 5</option>
+          <option value="claude-sonnet-5-5">Sonnet 5.5</option>
+          <option value="claude-haiku-5-5">Haiku 5.5</option>
+        </select>
+        <span class="badge ghost" id="changeKey">Change key</span>
+      </div>
+    </div>
+
+    <div class="progress" id="progress"></div>
+
+    <!-- ---------- BUILD MODE ---------- -->
+    <div id="build">
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="step-label">Step 1</div>
+        <div class="step-title">What kind of ad is this?</div>
+        <div class="opts" id="typeOpts"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="step-label">Step 2</div>
+        <div class="step-title">Which category?</div>
+        <div class="opts" id="catOpts"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="step-label">Step 3</div>
+        <div class="step-title">Product / reference images</div>
+        <div class="dropzone" id="drop">
+          <div class="dz-main">Click to choose images</div>
+          <div class="dz-sub" id="dzSub">Or drop them here &mdash; 1 to 10</div>
+        </div>
+        <div class="imgs" id="imgGrid"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="step-label">Step 4</div>
+        <div class="step-title">How long is the script?</div>
+        <div class="durs" id="durOpts"></div>
+        <input class="field hidden" id="durCustom" style="font-size:14px;padding:11px 14px;margin-top:8px" placeholder="e.g. 75 seconds" />
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="step-label">Step 5</div>
+        <div class="step-title">Story approach per script</div>
+        <div id="slots"></div>
+        <div class="note" style="background:#f8f8f8;border-color:var(--line);color:#888">Leave any on Auto and Claude picks the approach that fits best - and tells you which it chose.</div>
+      </div>
+
+      <div class="card">
+        <div class="step-label">Step 6</div>
+        <div class="step-title">Write the scripts</div>
+        <textarea class="brief" id="brief" placeholder="Anything specific to work in? Occasion, product name, offer, must-have shot. Optional."></textarea>
+        <button class="btn" id="generate" style="margin-top:10px" disabled>Generate 3 Scripts</button>
+        <div class="note" id="buildNote">Pick an ad type, a category and a duration to unlock Claude.</div>
+      </div>
+    </div>
+
+    <!-- ---------- QUICK FIRE MODE ---------- -->
+    <div id="quick" class="hidden">
+      <div class="card">
+        <div class="step-label">Quick Fire</div>
+        <div class="tags" id="qTags"></div>
+        <div class="row">
+          <button class="btn ghost sm" id="again">Generate Again</button>
+          <button class="btn sm" id="edit">Edit Brief</button>
+        </div>
+        <div class="chip-label">Change category</div>
+        <div class="chips" id="qCats"></div>
+        <div class="chip-label">Change duration</div>
+        <div class="chips" id="qDurs"></div>
+        <div class="chip-label">Story approach</div>
+        <div id="qSlots"></div>
+        <button class="btn ghost sm" id="reset" style="margin-top:16px">Start Over</button>
+      </div>
+    </div>
+
+    <div id="sideErr" class="err hidden"></div>
+  </div>
+
+  <!-- ---------- OUTPUT ---------- -->
+  <div class="right">
+    <div class="out">
+      <div class="out-head">
+        <div class="out-title" id="outTitle">Claude's output</div>
+        <div class="out-actions">
+          <button class="mini hidden" id="stopBtn">Stop</button>
+          <button class="mini" id="copyBtn" disabled>Copy</button>
+          <button class="mini" id="saveBtn" disabled>Save .md</button>
+        </div>
+      </div>
+      <div class="out-body" id="outBody">
+        <div class="empty" id="empty">
+          <div class="big">Nothing yet</div>
+          <div class="small">Pick the ad type, the category and a duration &mdash; Claude writes three different scripts, on brand and shot-ready.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="filePicker" accept="image/*" multiple class="hidden" />
+
+<!-- The brand profile is served from brand.local.js when it exists, otherwise
+     from the committed brand.example.js. See the README. -->
+<script src="brand.js"></script>
+
+<script>
+// ---------------------------------------------------------------- data
+const AD_TYPES = ['Campaign Ad', 'Product Ad', 'Founder’s Ad'];
+
+const CATEGORIES = [
+  'Sneakers', 'Slip-Ons', 'Loafers', 'Oxfords & Brogues', 'Sandals',
+  'Slides', 'Clogs', 'Flip-Flops', 'Flats (Women)', 'Sports & Walking',
+  'Whole range / Brand level',
+];
+
+const DURATIONS = ['6 sec', '10 sec', '15 sec', '20 sec', '30 sec', '45 sec', '60 sec', 'Custom'];
+
+const APPROACHES = ['Auto', 'Origin Based', 'Over The Top', 'Slice of Life', 'Problem-Solution', 'Metaphorical'];
+
+// How each approach is explained to Claude, so the three scripts come back
+// genuinely built on different structures rather than relabelled.
+const APPROACH_BRIEF = {
+  'Origin Based': 'Origin Based - go to where it came from. The material, the maker, the question the brand started from, the reason this shoe exists at all. Earn the product through its beginning.',
+  'Over The Top': 'Over The Top - take one product truth and push it to an absurd, heightened extreme. Commit fully to the exaggeration; the gag only works if the world plays it straight.',
+  'Slice of Life': 'Slice of Life - one small, true, recognisable moment from the audience’s day. No heightening. The product belongs in the moment rather than interrupting it.',
+  'Problem-Solution': 'Problem-Solution - name a real friction sharply in the first beats, then let the product resolve it. Make the problem specific enough that people wince in recognition.',
+  'Metaphorical': 'Metaphorical - carry the idea through an image or parallel world that is not literally the product. The metaphor must pay off on a real product truth, not just look good.',
+};
+
+const state = {
+  adType: '',
+  category: '',
+  duration: '',
+  customDuration: '',
+  brief: '',
+  approaches: ['Auto', 'Auto', 'Auto'],
+  images: [],            // [{ url, name }]
+  sessionId: null,
+  mode: 'build',         // build | quick
+  step: 1,
+  model: 'claude-opus-5',
+  lastMarkdown: '',
+  lastTitle: 'scripts',
+};
+
+const MAX_IMAGES = 10;
+const $ = (id) => document.getElementById(id);
+let controller = null;
+
+// ------------------------------------------------------------ server link
+// This page is only half the app - server.js holds the key and calls Claude.
+// Opened straight off the disk (file://) there is nothing behind a relative
+// fetch, so send the browser to the server instead of failing.
+const SERVER = 'http://localhost:4321';
+const FROM_DISK = location.protocol === 'file:';
+
+async function serverReachable() {
+  try {
+    await fetch(SERVER + '/api/key', { mode: 'no-cors', cache: 'no-store' });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// The browser says "Failed to fetch" for a server that is simply not running.
+// Say what that actually means, and what to do about it.
+function netMessage(e) {
+  if (e instanceof TypeError) {
+    return 'Cannot reach the IdeaBank server at ' + (FROM_DISK ? SERVER : location.origin) +
+           ' - it looks like it is not running. Double-click start.bat, then reload.';
+  }
+  return e.message;
+}
+
+function showOffline(msg) {
+  $('gate').classList.add('hidden');
+  if (msg) $('offlineWhy').textContent = msg;
+  $('offline').classList.remove('hidden');
+}
+
+// ---------------------------------------------------------------- brand
+// The brand profile is loaded separately (see brand.example.js / brand.local.js)
+// so that confidential brand content never sits in version control.
+const BRAND = (window.BRAND_PROFILE || []).join('\n');
+
+// ---------------------------------------------------------------- prompts
+const SYSTEM = [
+  'You are a senior creative director at a top Indian ad agency, writing ad film scripts for Neeman’s.',
+  'You know this brand cold. Everything in the brief below is the brand’s own documented strategy, tone of voice and film guidelines - treat it as law, not inspiration.',
+  '',
+  BRAND,
+  '',
+  '# HOW TO WRITE',
+  'Write three scripts that could genuinely be shot, not three versions of the same thought. Make them fight each other - never three flavors of the same idea.',
+  'Each script is assigned a story approach in the brief. That approach is the structure of the film, not a label to sprinkle on top - build the whole script out of it.',
+  'Where the approach is Auto, pick the one that serves the brief best and say which you picked. Do not give two scripts the same approach unless the brief asks for it.',
+  'Put the approach in the heading, like: ## Script 1 - TITLE (Slice of Life)',
+  'Everything must fit the exact duration asked for. Count it honestly - a 15 sec film is about 35 words of voiceover, not 90.',
+  'Open on the hardest-working frame you have. The first second decides whether anyone watches the rest.',
+  'Assume it plays on mute first. The idea has to land through picture and supers alone, with sound as the reward.',
+  'Write supers the way the brand writes them: Bebas Neue, few words, large.',
+  'FOUNDER ADS have their own rules. The founder is not a spokesperson reading lines - he is the proof. Write first person, spoken, with the hesitations and specifics of someone who actually made the thing.',
+  'Lead with a real decision, problem or trade-off from building the product, not with a greeting or a sales pitch. Earn the claim before you make it.',
+  'This is where the personality oppositions in the brand profile matter most - a founder on camera is one sentence away from sounding smug. No lecturing the audience.',
+  'Keep the craft honest: direct address to lens, natural light, a real place - the workshop, the warehouse, the store, the road. Handheld is allowed. Polish it and it stops being true.',
+  'Product still has to be seen and understood. Cut to it; do not just talk about it.',
+  '',
+  'If reference images are attached, they are the actual product and the actual look. Describe what you can see - color, material, silhouette, texture - and build the film around it. Do not describe a shoe that is not in the picture.',
+  '',
+  '# OUTPUT FORMAT - follow exactly',
+  'Start with a single line: the ad type, category and duration you are writing to. No preamble, no restating the brief.',
+  'Then for each of the three scripts:',
+  '',
+  '## Script N - <Title in caps>',
+  '**The idea** - one sentence. What this film is actually about.',
+  '**Why it is Neeman’s** - one or two lines tying it to positioning, tone or personality. Name the rule you are using.',
+  '',
+  '| Time | Visual | Audio / VO | Super |',
+  'A real markdown table. Break the full duration into beats whose timings add up exactly - include the start and end slates in the count.',
+  'The Visual column is a shot description a director can shoot: framing, action, location, light.',
+  '',
+  '**Taglines** - three options, one of which may be CHANGE THE NORM if it genuinely fits.',
+  '**Music and sound** - genre, tempo, texture, and where the cut turns.',
+  '**Craft reference** - name the specific thing you are borrowing from and why it suits Neeman’s. Be concrete about brands, formats or visual conventions.',
+  '',
+  'After the three scripts, write:',
+  '## The Pick',
+  'Two or three lines: which script you would make and the honest reason - what it risks and what it wins.',
+].join('\n');
+
+function durationText() {
+  if (state.duration === 'Custom') return state.customDuration.trim();
+  return state.duration;
+}
+
+function buildPrompt() {
+  const lines = [];
+  lines.push('Write three ad film scripts for Neeman’s.');
+  lines.push('');
+  lines.push('Ad type: ' + state.adType);
+  if (state.adType === 'Campaign Ad') {
+    lines.push('A campaign ad - lead with the brand idea and the audience truth. Product serves the story.');
+  } else if (state.adType === 'Founder’s Ad') {
+    lines.push('A founder’s ad - the founder is on camera, in first person, pitching this product or telling a story about why the brand exists.');
+  } else {
+    lines.push('A product ad - the product is the hero. The idea exists to make this specific shoe wanted.');
+  }
+  lines.push('Category: ' + state.category);
+  lines.push('Duration: ' + durationText() + ' - every beat must add up to exactly this.');
+  lines.push('Reference images attached: ' + (state.images.length || 'none'));
+  lines.push('');
+  lines.push('Story approach for each script:');
+  state.approaches.forEach((a, i) => {
+    lines.push('Script ' + (i + 1) + ': ' + (a === 'Auto'
+      ? 'Auto - you choose the approach that serves this brief best, and name it in the heading.'
+      : APPROACH_BRIEF[a]));
+  });
+  if (state.brief) {
+    lines.push('');
+    lines.push('Extra direction from the team: ' + state.brief);
+  }
+  return lines.join('\n');
+}
+
+// ---------------------------------------------------------------- key gate
+async function keyStatus() {
+  const r = await fetch('/api/key');
+  return r.json();
+}
+
+async function initKey() {
+  let s;
+  try {
+    s = await keyStatus();
+  } catch (e) {
+    showOffline(netMessage(e));
+    return;
+  }
+  $('cfgPath').textContent = s.configFile;
+  state.model = s.model || state.model;
+  $('modelSel').value = state.model;
+  if (s.hasKey) {
+    $('gate').classList.add('hidden');
+    $('keyBadge').textContent = s.source === 'env' ? 'Claude connected (env key)' : 'Claude connected - ' + s.hint;
+  } else {
+    $('gate').classList.remove('hidden');
+    $('keyInput').focus();
+  }
+}
+
+$('keySave').onclick = async () => {
+  const btn = $('keySave');
+  const val = $('keyInput').value.trim();
+  const err = $('keyErr');
+  err.classList.add('hidden');
+  if (!val) { err.textContent = 'Paste your key first.'; err.classList.remove('hidden'); return; }
+  btn.disabled = true;
+  btn.textContent = 'Verifying with Anthropic...';
+  try {
+    const r = await fetch('/api/key', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ apiKey: val }),
+    });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.message || 'Key rejected.');
+    $('keyInput').value = '';
+    await initKey();
+  } catch (e) {
+    err.textContent = netMessage(e);
+    err.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save & Verify Key';
+  }
+};
+
+$('keyInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('keySave').click(); });
+
+$('changeKey').onclick = async () => {
+  await fetch('/api/key', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ forget: true }) });
+  $('gate').classList.remove('hidden');
+  $('keyInput').focus();
+};
+
+$('modelSel').onchange = async () => {
+  state.model = $('modelSel').value;
+  await fetch('/api/model', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model: state.model }) });
+};
+
+// ---------------------------------------------------------------- ui
+function renderProgress() {
+  const host = $('progress');
+  host.innerHTML = '';
+  for (let i = 1; i <= 6; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === state.step ? ' active' : i < state.step ? ' done' : '');
+    d.textContent = i;
+    host.appendChild(d);
+    if (i < 6) {
+      const b = document.createElement('div');
+      b.className = 'bar' + (i < state.step ? ' done' : '');
+      host.appendChild(b);
+    }
+  }
+}
+
+function optionList(host, items, key) {
+  host.innerHTML = '';
+  items.forEach((label) => {
+    const b = document.createElement('button');
+    b.className = 'opt' + (state[key] === label ? ' sel' : '');
+    b.textContent = label;
+    b.onclick = () => { state[key] = label; sync(); };
+    host.appendChild(b);
+  });
+}
+
+function durationList(host, cls, afterPick) {
+  host.innerHTML = '';
+  DURATIONS.forEach((label) => {
+    const b = document.createElement('button');
+    b.className = cls + (state.duration === label ? ' sel' : '');
+    b.textContent = label;
+    b.onclick = () => {
+      state.duration = label;
+      $('durCustom').classList.toggle('hidden', label !== 'Custom');
+      if (label === 'Custom') $('durCustom').focus();
+      sync();
+      if (afterPick && label !== 'Custom') afterPick();
+    };
+    host.appendChild(b);
+  });
+}
+
+function chipList(host, items, key, afterPick) {
+  host.innerHTML = '';
+  items.forEach((label) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (state[key] === label ? ' sel' : '');
+    b.textContent = label;
+    b.onclick = () => { state[key] = label; sync(); if (afterPick) afterPick(); };
+    host.appendChild(b);
+  });
+}
+
+function renderApproaches(host) {
+  host.innerHTML = '';
+  state.approaches.forEach((picked, idx) => {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    const name = document.createElement('div');
+    name.className = 'slot-name';
+    name.textContent = 'Script ' + (idx + 1);
+    const chips = document.createElement('div');
+    chips.className = 'chips';
+    APPROACHES.forEach((label) => {
+      const b = document.createElement('button');
+      b.className = 'chip' + (picked === label ? ' sel' : '');
+      b.textContent = label;
+      b.onclick = () => { state.approaches[idx] = label; sync(); };
+      chips.appendChild(b);
+    });
+    slot.appendChild(name);
+    slot.appendChild(chips);
+    host.appendChild(slot);
+  });
+}
+
+// ---------------------------------------------------------------- sessions
+let sessions = [];
+
+function sessionLabel() {
+  return [state.adType, state.category, durationText()].filter(Boolean).join(' - ');
+}
+
+async function loadSessions() {
+  try {
+    const r = await fetch('/api/sessions');
+    sessions = (await r.json()).sessions || [];
+  } catch (e) {
+    sessions = [];
+  }
+  renderSessions();
+}
+
+function renderSessions() {
+  const host = $('sbList');
+  host.innerHTML = '';
+  if (!sessions.length) {
+    host.innerHTML = '<div class="sb-empty">Nothing saved yet.<br>Every set of scripts you generate lands here.</div>';
+    return;
+  }
+  sessions.forEach((rec) => {
+    const el = document.createElement('div');
+    el.className = 'sess' + (rec.id === state.sessionId ? ' sel' : '');
+    el.onclick = () => openSession(rec.id);
+
+    const name = document.createElement('div');
+    name.className = 'sess-name';
+    name.textContent = rec.title;
+
+    const sub = document.createElement('div');
+    sub.className = 'sess-sub';
+    sub.textContent = new Date(rec.created).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    const x = document.createElement('button');
+    x.className = 'sess-x';
+    x.textContent = '×';
+    x.title = 'Delete';
+    x.onclick = (e) => { e.stopPropagation(); deleteSession(rec.id); };
+
+    el.appendChild(name);
+    el.appendChild(sub);
+    el.appendChild(x);
+    host.appendChild(el);
+  });
+}
+
+async function saveSession(markdown) {
+  if (!markdown) return;
+  const id = state.sessionId || (Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7));
+  state.sessionId = id;
+  const rec = {
+    id,
+    title: sessionLabel(),
+    created: Date.now(),
+    meta: { adType: state.adType, category: state.category, duration: durationText(), approaches: state.approaches.slice() },
+    brief: { text: state.brief, images: state.images.length },
+    markdown,
+  };
+  try {
+    await fetch('/api/sessions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(rec),
+    });
+    await loadSessions();
+  } catch (e) {
+    showError('Could not save this session: ' + netMessage(e));
+  }
+}
+
+async function openSession(id) {
+  let rec;
+  try {
+    const r = await fetch('/api/sessions/' + encodeURIComponent(id));
+    if (!r.ok) throw new Error('That session could not be opened.');
+    rec = await r.json();
+  } catch (e) {
+    showError(netMessage(e));
+    return;
+  }
+  if (controller) controller.abort();
+
+  const m = rec.meta || {};
+  state.sessionId = rec.id;
+  state.adType = m.adType || '';
+  state.category = m.category || '';
+  state.approaches = (m.approaches && m.approaches.length === 3) ? m.approaches.slice() : ['Auto', 'Auto', 'Auto'];
+  state.brief = (rec.brief && rec.brief.text) || '';
+  $('brief').value = state.brief;
+
+  // Durations that are not one of the presets come back as a custom value.
+  const dur = m.duration || '';
+  if (DURATIONS.includes(dur)) {
+    state.duration = dur;
+    state.customDuration = '';
+    $('durCustom').value = '';
+    $('durCustom').classList.add('hidden');
+  } else if (dur) {
+    state.duration = 'Custom';
+    state.customDuration = dur;
+    $('durCustom').value = dur;
+    $('durCustom').classList.remove('hidden');
+  }
+
+  state.mode = 'quick';
+  state.step = 6;
+  $('build').classList.add('hidden');
+  $('quick').classList.remove('hidden');
+
+  state.lastMarkdown = rec.markdown || '';
+  state.lastTitle = rec.title || 'scripts';
+  $('outTitle').textContent = rec.title || 'Saved scripts';
+  $('outBody').innerHTML = '<div class="md" id="md"></div>';
+  $('md').innerHTML = markdown(state.lastMarkdown);
+  $('outBody').scrollTop = 0;
+  $('copyBtn').disabled = !state.lastMarkdown;
+  $('saveBtn').disabled = !state.lastMarkdown;
+
+  sync();
+}
+
+async function deleteSession(id) {
+  try {
+    await fetch('/api/sessions/' + encodeURIComponent(id), { method: 'DELETE' });
+  } catch (e) {
+    showError(netMessage(e));
+    return;
+  }
+  if (state.sessionId === id) state.sessionId = null;
+  await loadSessions();
+}
+
+function renderImages() {
+  const grid = $('imgGrid');
+  grid.innerHTML = '';
+  state.images.forEach((img, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'thumb';
+    const el = document.createElement('img');
+    el.src = img.url;
+    el.title = img.name;
+    const x = document.createElement('button');
+    x.textContent = '×';
+    x.title = 'Remove';
+    x.onclick = (e) => { e.stopPropagation(); state.images.splice(i, 1); renderImages(); sync(); };
+    wrap.appendChild(el);
+    wrap.appendChild(x);
+    grid.appendChild(wrap);
+  });
+  const n = state.images.length;
+  $('dzSub').textContent = n
+    ? n + ' image' + (n > 1 ? 's' : '') + ' added' + (n < MAX_IMAGES ? ' - room for ' + (MAX_IMAGES - n) + ' more' : ' - that is the limit')
+    : 'Or drop them here - 1 to 10';
+  $('drop').classList.toggle('over', false);
+}
+
+function ready() {
+  return Boolean(state.adType && state.category && durationText());
+}
+
+function sync() {
+  state.brief = $('brief').value.trim();
+  state.customDuration = $('durCustom').value;
+
+  optionList($('typeOpts'), AD_TYPES, 'adType');
+  optionList($('catOpts'), CATEGORIES, 'category');
+  durationList($('durOpts'), 'dur');
+  renderApproaches($('slots'));
+  renderApproaches($('qSlots'));
+
+  $('generate').disabled = !ready();
+  $('buildNote').textContent = ready()
+    ? 'Ready. Claude writes three different scripts at ' + durationText() + ', on brand and shot-ready.'
+    : 'Pick an ad type, a category and a duration to unlock Claude.';
+
+  if (state.mode === 'build') {
+    state.step = !state.adType ? 1 : !state.category ? 2 : !state.images.length ? 3 : !durationText() ? 4 : 5;
+    if (state.step === 5 && state.approaches.some((a) => a !== 'Auto')) state.step = 6;
+  }
+
+  $('qTags').innerHTML = '';
+  [state.adType, state.category, durationText(), state.images.length ? state.images.length + ' refs' : '']
+    .filter(Boolean)
+    .forEach((t, i) => {
+      const s = document.createElement('span');
+      s.className = 'tag' + (i === 0 ? ' dark' : '');
+      s.textContent = t;
+      $('qTags').appendChild(s);
+    });
+  chipList($('qCats'), CATEGORIES, 'category', runScripts);
+  durationList($('qDurs'), 'chip', runScripts);
+
+  renderSessions();
+  renderProgress();
+}
+
+$('brief').addEventListener('input', sync);
+$('durCustom').addEventListener('input', sync);
+
+// ---------------------------------------------------------------- markdown
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function inline(s) {
+  return escapeHtml(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+}
+
+const isTableRow = (l) => /^\s*\|.*\|\s*$/.test(l);
+const isTableRule = (l) => /^\s*\|[\s:|-]+\|\s*$/.test(l);
+const cells = (l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+
+function markdown(src) {
+  const lines = src.split('\n');
+  const out = [];
+  let list = null;
+  const closeList = () => { if (list) { out.push('</' + list + '>'); list = null; } };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].replace(/\s+$/, '');
+    if (!line.trim()) { closeList(); continue; }
+
+    // shot tables - the scripts are written as these, so they matter
+    if (isTableRow(line) && isTableRule(lines[i + 1] || '')) {
+      closeList();
+      const head = cells(line);
+      out.push('<table><thead><tr>' + head.map((c) => '<th>' + inline(c) + '</th>').join('') + '</tr></thead><tbody>');
+      i += 2;
+      for (; i < lines.length && isTableRow(lines[i]); i++) {
+        out.push('<tr>' + cells(lines[i]).map((c) => '<td>' + inline(c) + '</td>').join('') + '</tr>');
+      }
+      i--;
+      out.push('</tbody></table>');
+      continue;
+    }
+
+    let m;
+    if ((m = line.match(/^###\s+(.*)$/))) { closeList(); out.push('<h3>' + inline(m[1]) + '</h3>'); continue; }
+    if ((m = line.match(/^##\s+(.*)$/)))  { closeList(); out.push('<h2>' + inline(m[1]) + '</h2>'); continue; }
+    if ((m = line.match(/^#\s+(.*)$/)))   { closeList(); out.push('<h1>' + inline(m[1]) + '</h1>'); continue; }
+    if (/^(---|___|\*\*\*)$/.test(line.trim())) { closeList(); out.push('<hr>'); continue; }
+    if ((m = line.match(/^>\s?(.*)$/)))   { closeList(); out.push('<blockquote>' + inline(m[1]) + '</blockquote>'); continue; }
+    if ((m = line.match(/^\s*[-*]\s+(.*)$/))) {
+      if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; }
+      out.push('<li>' + inline(m[1]) + '</li>');
+      continue;
+    }
+    if ((m = line.match(/^\s*\d+[.)]\s+(.*)$/))) {
+      if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; }
+      out.push('<li>' + inline(m[1]) + '</li>');
+      continue;
+    }
+    closeList();
+    out.push('<p>' + inline(line) + '</p>');
+  }
+  closeList();
+  return out.join('');
+}
+
+// ---------------------------------------------------------------- streaming
+function showError(msg) {
+  const box = $('sideErr');
+  box.textContent = msg;
+  box.classList.remove('hidden');
+  setTimeout(() => box.classList.add('hidden'), 12000);
+}
+
+async function ask({ title, system, messages, onDone }) {
+  if (controller) controller.abort();
+  controller = new AbortController();
+
+  $('outTitle').textContent = title;
+  $('stopBtn').classList.remove('hidden');
+  $('copyBtn').disabled = true;
+  $('saveBtn').disabled = true;
+
+  const body = $('outBody');
+  body.innerHTML = '<div class="md" id="md"></div>';
+  const md = $('md');
+  let text = '';
+  let stuckToBottom = true;
+  body.onscroll = () => { stuckToBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 60; };
+
+  const paint = () => {
+    md.innerHTML = markdown(text) + '<span class="caret"></span>';
+    if (stuckToBottom) body.scrollTop = body.scrollHeight;
+  };
+  paint();
+
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: state.model, system, messages, max_tokens: 12000 }),
+      signal: controller.signal,
+    });
+
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({ message: 'Request failed (' + r.status + ')' }));
+      if (r.status === 401) { $('gate').classList.remove('hidden'); }
+      throw new Error(e.message);
+    }
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop();
+      for (const part of parts) {
+        for (const line of part.split('\n')) {
+          if (!line.startsWith('data:')) continue;
+          const payload = line.slice(5).trim();
+          if (!payload || payload === '[DONE]') continue;
+          let ev;
+          try { ev = JSON.parse(payload); } catch (err) { continue; }
+          if (ev.type === 'content_block_delta' && ev.delta && ev.delta.type === 'text_delta') {
+            text += ev.delta.text;
+            paint();
+          } else if (ev.type === 'error') {
+            throw new Error((ev.error && ev.error.message) || 'Stream error');
+          }
+        }
+      }
+    }
+
+    md.innerHTML = markdown(text);
+    state.lastMarkdown = text;
+    state.lastTitle = title;
+    $('copyBtn').disabled = false;
+    $('saveBtn').disabled = false;
+    if (onDone) onDone(text);
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      md.innerHTML = markdown(text);
+      state.lastMarkdown = text;
+      if (text) { $('copyBtn').disabled = false; $('saveBtn').disabled = false; }
+    } else {
+      const msg = netMessage(e);
+      showError(msg);
+      md.innerHTML = markdown(text) + '<p style="color:#c33">' + escapeHtml(msg) + '</p>';
+    }
+  } finally {
+    $('stopBtn').classList.add('hidden');
+    controller = null;
+  }
+}
+
+$('stopBtn').onclick = () => { if (controller) controller.abort(); };
+
+$('copyBtn').onclick = async () => {
+  await navigator.clipboard.writeText(state.lastMarkdown);
+  $('copyBtn').textContent = 'Copied';
+  setTimeout(() => ($('copyBtn').textContent = 'Copy'), 1500);
+};
+
+$('saveBtn').onclick = () => {
+  const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const name = ['neemans', slug(state.adType || 'ad'), slug(state.category || ''), slug(durationText() || '')]
+    .filter(Boolean).join('-') + '.md';
+  const blob = new Blob([state.lastMarkdown], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+// ---------------------------------------------------------------- actions
+function runScripts() {
+  if (!ready()) return;
+  state.mode = 'quick';
+  state.step = 6;
+  state.sessionId = null;        // every run is its own entry in the sidebar
+  $('build').classList.add('hidden');
+  $('quick').classList.remove('hidden');
+  sync();
+
+  const content = [];
+  state.images.forEach((img, i) => {
+    content.push({ type: 'text', text: 'Reference image ' + (i + 1) + ' (' + img.name + '):' });
+    content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img.url.split(',')[1] } });
+  });
+  content.push({ type: 'text', text: buildPrompt() });
+
+  ask({
+    title: '3 scripts - ' + state.category + ', ' + durationText(),
+    system: SYSTEM,
+    messages: [{ role: 'user', content }],
+    onDone: (text) => saveSession(text),
+  });
+}
+
+$('newSession').onclick = () => $('reset').click();
+$('generate').onclick = runScripts;
+$('again').onclick = runScripts;
+
+$('edit').onclick = () => {
+  state.mode = 'build';
+  $('quick').classList.add('hidden');
+  $('build').classList.remove('hidden');
+  sync();
+};
+
+$('reset').onclick = () => {
+  state.adType = ''; state.category = ''; state.duration = ''; state.customDuration = '';
+  state.brief = ''; state.images = [];
+  state.approaches = ['Auto', 'Auto', 'Auto'];
+  state.sessionId = null;
+  state.lastMarkdown = ''; state.lastTitle = 'scripts';
+  state.mode = 'build'; state.step = 1;
+  $('brief').value = '';
+  $('durCustom').value = '';
+  $('durCustom').classList.add('hidden');
+  $('build').classList.remove('hidden');
+  $('quick').classList.add('hidden');
+  renderImages();
+  $('outBody').innerHTML = '<div class="empty"><div class="big">Nothing yet</div><div class="small">Pick the ad type, the category and a duration - Claude writes three different scripts, on brand and shot-ready.</div></div>';
+  $('outTitle').textContent = "Claude's output";
+  $('copyBtn').disabled = true; $('saveBtn').disabled = true;
+  sync();
+};
+
+// ---------------------------------------------------------------- uploads
+function shrink(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read ' + file.name));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not decode ' + file.name));
+      img.onload = () => {
+        const max = 1200;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function addFiles(fileList) {
+  const room = MAX_IMAGES - state.images.length;
+  if (room <= 0) { showError('That is already ' + MAX_IMAGES + ' images - remove one to add another.'); return; }
+  const files = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
+  if (!files.length) return;
+  const taking = files.slice(0, room);
+  $('dzSub').textContent = 'Loading...';
+  try {
+    const urls = await Promise.all(taking.map(shrink));
+    urls.forEach((u, i) => state.images.push({ url: u, name: taking[i].name }));
+    if (files.length > room) showError('Added ' + room + ' - ' + MAX_IMAGES + ' is the limit.');
+  } catch (err) {
+    showError(err.message);
+  }
+  renderImages();
+  sync();
+}
+
+$('drop').onclick = () => { $('filePicker').value = ''; $('filePicker').click(); };
+$('filePicker').onchange = (e) => addFiles(e.target.files);
+
+['dragenter', 'dragover'].forEach((ev) => {
+  $('drop').addEventListener(ev, (e) => { e.preventDefault(); $('drop').classList.add('over'); });
+});
+['dragleave', 'drop'].forEach((ev) => {
+  $('drop').addEventListener(ev, (e) => { e.preventDefault(); $('drop').classList.remove('over'); });
+});
+$('drop').addEventListener('drop', (e) => { if (e.dataTransfer) addFiles(e.dataTransfer.files); });
+
+// ---------------------------------------------------------------- boot
+$('offlineGo').onclick = () => { location.href = SERVER; };
+
+async function boot() {
+  if (FROM_DISK) {
+    // Opened by double-clicking index.html. Hand over to the real server.
+    if (await serverReachable()) { location.replace(SERVER); return; }
+    showOffline('The server is not running yet, so this page has nothing to talk to.');
+    return;
+  }
+  renderImages();
+  sync();
+  initKey();
+  loadSessions();
+  if (window.BRAND_IS_PLACEHOLDER) {
+    showError('Running on the placeholder brand profile - copy public/brand.example.js to public/brand.local.js and fill it in, then reload.');
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
